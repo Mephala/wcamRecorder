@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="xuggle-xuggler">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/main/resources/xuggle-xuggler.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
