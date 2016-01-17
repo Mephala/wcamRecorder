@@ -1,15 +1,15 @@
 package com.mephalay.main;
 
 import com.github.sarxos.webcam.Webcam;
-import org.jcodec.api.awt.SequenceEncoder;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,40 +21,76 @@ import java.util.concurrent.TimeUnit;
 public class Main {
 
 
+    public static void detectMovement(List<String> fileNames) {
+        try {
+            List<File> files = new ArrayList<File>();
+            for (int i = fileNames.size() - 1000; i < fileNames.size(); i++) {
+                files.add(new File(fileNames.get(i)));
+            }
+
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+
     public static void main(String[] args) {
 
         try {
-
-            Webcam webcam = Webcam.getDefault();
-            Dimension dimension = new Dimension();
-            dimension.setSize(1980, 1080);
-            webcam.getDevice().setResolution(dimension);
-            webcam.open();
-            ExecutorService es = Executors.newCachedThreadPool();
-            Long movieName = System.currentTimeMillis();
-            final List<String> list = new ArrayList<String>();
-            for (int i = 0; i < 75000; i++) {
-                final int tmp =i;
-                final long start = System.currentTimeMillis();
-                final BufferedImage image = webcam.getImage();
-                es.submit(new Runnable() {
-                    public void run() {
-                        String filePath = "C:\\Users\\masraf\\Desktop\\Programming\\wcam\\img"+tmp+".jpg";
-                        try {
-                            ImageIO.write(image, "JPG", new File(filePath));
-                            list.add(filePath);
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                        }
-                    }
-                });
-                long differ = System.currentTimeMillis()-start;
-                if (differ < 40)
-                    Thread.sleep(40 - differ);
-            }
-            es.shutdown();
-            es.awaitTermination(999999L, TimeUnit.HOURS);
-            System.out.println("DONE!!!");
+            recordSample();
+//            Webcam webcam = Webcam.getDefault();
+//            Dimension dimension = new Dimension();
+//            dimension.setSize(1980, 1080);
+//            webcam.getDevice().setResolution(dimension);
+//            webcam.open();
+//            ExecutorService es = Executors.newCachedThreadPool();
+//            Long movieName = System.currentTimeMillis();
+//            final List<String> list = new ArrayList<String>();
+//            long capStart = System.currentTimeMillis();
+//            int i = 0;
+//            while((System.currentTimeMillis() - capStart) < 300000){
+//                final int tmp =i;
+//                final long start = System.currentTimeMillis();
+//                final BufferedImage image = webcam.getImage();
+//                es.submit(new Runnable() {
+//                    public void run() {
+//                        String filePath = "D:\\wcam\\img"+tmp+".jpg";
+//                        try {
+//                            ImageIO.write(image, "JPG", new File(filePath));
+//                            list.add(filePath);
+//                        } catch (Throwable t) {
+//                            t.printStackTrace();
+//                        }
+//                    }
+//                });
+//                long differ = System.currentTimeMillis()-start;
+//                if (differ < 40)
+//                    Thread.sleep(40 - differ);
+//                i++;
+//            }
+//            for (int i = 0; i < 50; i++) {
+//                final int tmp =i;
+//                final long start = System.currentTimeMillis();
+//                final BufferedImage image = webcam.getImage();
+//                es.submit(new Runnable() {
+//                    public void run() {
+//                        String filePath = "D:\\wcam\\img"+tmp+".jpg";
+//                        try {
+//                            ImageIO.write(image, "JPG", new File(filePath));
+//                            list.add(filePath);
+//                        } catch (Throwable t) {
+//                            t.printStackTrace();
+//                        }
+//                    }
+//                });
+//                long differ = System.currentTimeMillis()-start;
+//                if (differ < 40)
+//                    Thread.sleep(40 - differ);
+//            }
+//            es.shutdown();
+//            es.awaitTermination(999999L, TimeUnit.HOURS);
+//            System.out.println("DONE!!!");
 //            Collections.sort(list, new Comparator<String>() {
 //                public int compare(String o1, String o2) {
 //                    int sepIndex1 = o1.lastIndexOf("\\");
@@ -131,5 +167,100 @@ public class Main {
 
     }
 
+
+    public static void recordSample() {
+        try {
+            Webcam webcam = Webcam.getDefault();
+            Dimension dimension = new Dimension();
+            dimension.setSize(1980, 1080);
+            webcam.getDevice().setResolution(dimension);
+            webcam.open();
+            final ExecutorService videoRenderingService = Executors.newCachedThreadPool();
+            for (int k = 0; k < 600; k++) {
+                final ExecutorService webcamImageCreatorService = Executors.newCachedThreadPool();
+                File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
+                recordFolder.mkdir();
+                final String recordFolderPath = recordFolder.getAbsolutePath();
+                System.out.println("Capturing images for folder:" + recordFolderPath);
+                Long movieName = System.currentTimeMillis();
+                final List<String> list = new ArrayList<String>();
+                long capStart = System.currentTimeMillis();
+                int i = 0;
+                while ((System.currentTimeMillis() - capStart) < 30000) {
+                    final int tmp = i;
+                    final long start = System.currentTimeMillis();
+                    final BufferedImage image = webcam.getImage();
+                    webcamImageCreatorService.submit(new Runnable() {
+                        public void run() {
+                            String filePath = recordFolderPath + File.separator + "img" + tmp + ".jpg";
+                            try {
+                                ImageIO.write(image, "JPG", new File(filePath));
+                                list.add(filePath);
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                            }
+                        }
+                    });
+                    long differ = System.currentTimeMillis() - start;
+                    if (differ < 40)
+                        Thread.sleep(40 - differ);
+                    i++;
+                }
+                System.out.println("Done capturing images for folder:" + recordFolderPath + ". Now creating video rendering thread and resuming capturing...");
+                videoRenderingService.submit(new Runnable() {
+                    public void run() {
+                        try {
+                            webcamImageCreatorService.shutdown();
+                            webcamImageCreatorService.awaitTermination(999999L, TimeUnit.HOURS);
+                            Runtime rt = Runtime.getRuntime();
+                            String ffmpegCommand = "ffmpeg -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+//            String command = "java -version";
+                            String[] command =
+                                    {
+                                            "cmd",
+                                    };
+                            Process p = Runtime.getRuntime().exec(command);
+                            new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
+                            new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
+                            PrintWriter stdin = new PrintWriter(p.getOutputStream());
+                            stdin.println(ffmpegCommand);
+                            // write any other commands you want here
+                            stdin.close();
+                            int returnCode = p.waitFor();
+                            System.out.println("FFMPEG returned " + returnCode);
+                        } catch (Throwable t) {
+                            t.printStackTrace();
+                        }
+                    }
+                });
+            }
+            videoRenderingService.shutdown();
+            videoRenderingService.awaitTermination(999999L, TimeUnit.HOURS);
+            System.out.println("DONE");
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    static class SyncPipe implements Runnable {
+        public SyncPipe(InputStream istrm, OutputStream ostrm) {
+            istrm_ = istrm;
+            ostrm_ = ostrm;
+        }
+
+        public void run() {
+            try {
+                final byte[] buffer = new byte[1024];
+                for (int length = 0; (length = istrm_.read(buffer)) != -1; ) {
+                    ostrm_.write(buffer, 0, length);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        private final OutputStream ostrm_;
+        private final InputStream istrm_;
+    }
 
 }
