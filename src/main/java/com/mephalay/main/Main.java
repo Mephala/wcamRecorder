@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -175,10 +176,12 @@ public class Main {
             dimension.setSize(1980, 1080);
             webcam.getDevice().setResolution(dimension);
             webcam.open();
+            final int HOURS_TO_RECORD = 1;
+            final int loopLimitBasedOnRecordHour = calculateLoopLimit(HOURS_TO_RECORD);
             final ExecutorService videoRenderingService = Executors.newCachedThreadPool();
-            for (int k = 0; k < 600; k++) {
+            for (int k = 0; k < loopLimitBasedOnRecordHour; k++) {
                 final ExecutorService webcamImageCreatorService = Executors.newCachedThreadPool();
-                File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
+                final File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
                 recordFolder.mkdir();
                 final String recordFolderPath = recordFolder.getAbsolutePath();
                 System.out.println("Capturing images for folder:" + recordFolderPath);
@@ -190,10 +193,12 @@ public class Main {
                     final int tmp = i;
                     final long start = System.currentTimeMillis();
                     final BufferedImage image = webcam.getImage();
+                    final Date captureTime = new Date(start);
                     webcamImageCreatorService.submit(new Runnable() {
                         public void run() {
                             String filePath = recordFolderPath + File.separator + "img" + tmp + ".jpg";
                             try {
+                                addTimeStamp(image, captureTime);
                                 ImageIO.write(image, "JPG", new File(filePath));
                                 list.add(filePath);
                             } catch (Throwable t) {
@@ -228,6 +233,13 @@ public class Main {
                             stdin.close();
                             int returnCode = p.waitFor();
                             System.out.println("FFMPEG returned " + returnCode);
+                            System.out.println("Deleting images to save up space...");
+                            File[] filesUnderRecordFolder = recordFolder.listFiles();
+                            for (File file : filesUnderRecordFolder) {
+                                if (file.getName().contains(".jpg"))
+                                    file.delete();
+                            }
+                            System.out.println("Finished processing files.");
                         } catch (Throwable t) {
                             t.printStackTrace();
                         }
@@ -240,6 +252,10 @@ public class Main {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    private static int calculateLoopLimit(int hours_to_record) {
+        return hours_to_record * 60 * 2;
     }
 
     static class SyncPipe implements Runnable {
@@ -262,5 +278,19 @@ public class Main {
         private final OutputStream ostrm_;
         private final InputStream istrm_;
     }
+
+    private static void addTimeStamp(BufferedImage old, Date captureTime) {
+        int w = old.getWidth();
+        int h = old.getHeight();
+        Graphics2D g2d = old.createGraphics();
+        g2d.setFont(new Font("Serif", Font.BOLD, 20));
+        String s = captureTime.toString();
+        FontMetrics fm = g2d.getFontMetrics();
+        int x = old.getWidth() - fm.stringWidth(s) - 5;
+        int y = fm.getHeight();
+        g2d.drawString(s, x, y);
+        g2d.dispose();
+    }
+
 
 }
