@@ -42,21 +42,13 @@ public class Main {
 
         try {
 //            recordSample();
-            String folderPath  = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019305476";
-            BigDecimal rate = calculateMotionRateInsideFolder(folderPath);
-            System.out.println(rate.toPlainString());
-            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019275289";
-            rate = calculateMotionRateInsideFolder(folderPath);
-            System.out.println(rate.toPlainString());
-            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019245103";
-            rate = calculateMotionRateInsideFolder(folderPath);
-            System.out.println(rate.toPlainString());
-            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019215082";
-            rate = calculateMotionRateInsideFolder(folderPath);
-            System.out.println(rate.toPlainString());
-            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453020690785";
-            rate = calculateMotionRateInsideFolder(folderPath);
-            System.out.println(rate.toPlainString());
+            String folderPath  = "C:\\Users\\N56834\\Desktop\\Development\\wcam";
+            File[] subFolders = new File(folderPath).listFiles();
+            for (File subFolder : subFolders) {
+                long start = System.currentTimeMillis();
+                calculateMotionRateInsideFolder(subFolder.getAbsolutePath());
+                System.out.println("Calculated in " + (System.currentTimeMillis() - start) + " ms.");
+            }
         } catch (Throwable t) {
             t.printStackTrace();
         }
