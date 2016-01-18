@@ -9,12 +9,14 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Mephalay on 1/7/2016.
@@ -39,133 +41,125 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            recordSample();
-//            Webcam webcam = Webcam.getDefault();
-//            Dimension dimension = new Dimension();
-//            dimension.setSize(1980, 1080);
-//            webcam.getDevice().setResolution(dimension);
-//            webcam.open();
-//            ExecutorService es = Executors.newCachedThreadPool();
-//            Long movieName = System.currentTimeMillis();
-//            final List<String> list = new ArrayList<String>();
-//            long capStart = System.currentTimeMillis();
-//            int i = 0;
-//            while((System.currentTimeMillis() - capStart) < 300000){
-//                final int tmp =i;
-//                final long start = System.currentTimeMillis();
-//                final BufferedImage image = webcam.getImage();
-//                es.submit(new Runnable() {
-//                    public void run() {
-//                        String filePath = "D:\\wcam\\img"+tmp+".jpg";
-//                        try {
-//                            ImageIO.write(image, "JPG", new File(filePath));
-//                            list.add(filePath);
-//                        } catch (Throwable t) {
-//                            t.printStackTrace();
-//                        }
-//                    }
-//                });
-//                long differ = System.currentTimeMillis()-start;
-//                if (differ < 40)
-//                    Thread.sleep(40 - differ);
-//                i++;
-//            }
-//            for (int i = 0; i < 50; i++) {
-//                final int tmp =i;
-//                final long start = System.currentTimeMillis();
-//                final BufferedImage image = webcam.getImage();
-//                es.submit(new Runnable() {
-//                    public void run() {
-//                        String filePath = "D:\\wcam\\img"+tmp+".jpg";
-//                        try {
-//                            ImageIO.write(image, "JPG", new File(filePath));
-//                            list.add(filePath);
-//                        } catch (Throwable t) {
-//                            t.printStackTrace();
-//                        }
-//                    }
-//                });
-//                long differ = System.currentTimeMillis()-start;
-//                if (differ < 40)
-//                    Thread.sleep(40 - differ);
-//            }
-//            es.shutdown();
-//            es.awaitTermination(999999L, TimeUnit.HOURS);
-//            System.out.println("DONE!!!");
-//            Collections.sort(list, new Comparator<String>() {
-//                public int compare(String o1, String o2) {
-//                    int sepIndex1 = o1.lastIndexOf("\\");
-//                    int sepIndex2 = o2.lastIndexOf("\\");
-//                    String num1 = o1.substring(sepIndex1+1).replace(".jpg","");
-//                    String num2 = o2.substring(sepIndex2+1).replace(".jpg","");
-//                    Long num1Long = Long.parseLong(num1);
-//                    Long num2Long = Long.parseLong(num1);
-//                    return num1Long.compareTo(num2Long);
-//                }
-//            });
-//            SequenceEncoder enc = new SequenceEncoder(new File("C:\\Users\\masraf\\Desktop\\Programming\\wcam\\" + movieName+".mp4"));
-//
-//            for (String s : list) {
-//                BufferedImage bufferedImage = ImageIO.read(new File(s));
-//                enc.encodeImage(bufferedImage);
-//            }
-//            enc.finish();
-//            SequenceEncoder enc2 = new SequenceEncoder(new File("C:\\Users\\masraf\\Desktop\\Programming\\wcam\\" + movieName+".avi"));
-//
-//            for (String s : list) {
-//                BufferedImage bufferedImage = ImageIO.read(new File(s));
-//                enc2.encodeImage(bufferedImage);
-//            }
-//            enc2.finish();
-//            SequenceEncoder enc3 = new SequenceEncoder(new File("C:\\Users\\masraf\\Desktop\\Programming\\wcam\\" + movieName+".ogg"));
-//
-//            for (String s : list) {
-//                BufferedImage bufferedImage = ImageIO.read(new File(s));
-//                enc3.encodeImage(bufferedImage);
-//            }
-//            enc3.finish();
-//            SequenceEncoder enc4 = new SequenceEncoder(new File("C:\\Users\\masraf\\Desktop\\Programming\\wcam\\" + movieName+".flv"));
-//
-//            for (String s : list) {
-//                BufferedImage bufferedImage = ImageIO.read(new File(s));
-//                enc4.encodeImage(bufferedImage);
-//            }
-//            enc4.finish();
-
-
-//            DataOutputStream out = new DataOutputStream(new FileOutputStream(directory.getPath()+"/movie.avi"));
-//            for( String n : list ) {
-//
-//
-////			if( i < 338 || i > 800 )
-////				continue;
-//
-//                System.out.println("Reading in: "+n);
-//                DataInputStream in = new DataInputStream(new FileInputStream(n));
-//
-////			while( true ) {
-////				byte data[] = filterData(in);
-////				if( data == null )
-////					break;
-////
-////				out.write(data);
-////			}
-//
-//                while( in.available() > 0 ) {
-//                    byte data[] = new byte[ in.available()];
-//                    in.read(data);
-//                    out.write(data);
-//                }
-//
-//                in.close();
-//            }
-//            out.close();
-//
+//            recordSample();
+            String folderPath  = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019305476";
+            BigDecimal rate = calculateMotionRateInsideFolder(folderPath);
+            System.out.println(rate.toPlainString());
+            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019275289";
+            rate = calculateMotionRateInsideFolder(folderPath);
+            System.out.println(rate.toPlainString());
+            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019245103";
+            rate = calculateMotionRateInsideFolder(folderPath);
+            System.out.println(rate.toPlainString());
+            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453019215082";
+            rate = calculateMotionRateInsideFolder(folderPath);
+            System.out.println(rate.toPlainString());
+            folderPath = "C:\\Users\\N56834\\Desktop\\Development\\wcam\\1453020690785";
+            rate = calculateMotionRateInsideFolder(folderPath);
+            System.out.println(rate.toPlainString());
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
 
+    private static BigDecimal calculateMotionRateInsideFolder(final String folderPath) throws InterruptedException {
+        final AtomicInteger movementDetectionRate = new AtomicInteger(0);
+        ExecutorService movementDetectionWorkers = Executors.newFixedThreadPool(4);
+        for (int i = 0; i <29 ; i++) {
+            int startImgNum = i*5;
+            final String img1 = "img"+startImgNum+".jpg";
+            startImgNum+=5;
+            final String img2 = "img"+startImgNum+".jpg";
+            movementDetectionWorkers.submit(new Runnable() {
+                public void run() {
+                    detectMovementRate(img1, img2, folderPath, movementDetectionRate);
+                }
+            });
 
+        }
+        movementDetectionWorkers.shutdown();
+        movementDetectionWorkers.awaitTermination(99999L, TimeUnit.HOURS);
+        BigDecimal hundred = new BigDecimal(100);
+        BigDecimal rate = hundred.multiply(new BigDecimal(movementDetectionRate.get())).divide(new BigDecimal(29),2,BigDecimal.ROUND_HALF_UP);
+        System.out.println("Calculated motion rate of folder:" + folderPath + " =====>" + rate + ", which is favored by #threads:" + movementDetectionRate.get());
+        return rate;
+    }
+
+    private static void detectMovementRate(String img1, String img2, String folderPath, AtomicInteger movementDetectionRate) {
+        int[][][] img1pixels = getImagePixels(folderPath + File.separator +img1);
+        int[][][] img1pixelMeans = createPixelMeans(img1pixels);
+        int[][][] img2pixels = getImagePixels(folderPath + File.separator +img2);
+        int[][][] img2pixelMeans = createPixelMeans(img2pixels);
+        boolean motionDetected = motionDetected(img1pixelMeans, img2pixelMeans);
+        if(motionDetected)
+            movementDetectionRate.getAndIncrement();
+    }
+
+    private static boolean motionDetected(int[][][] img1pixelMeans, int[][][] img2pixelMeans) {
+        int boxSize = 20;
+        int xlen = 1920 / boxSize;
+        int ylen = 1080 / boxSize;
+        int redTolerance = 5;
+        int greenTolerance = 5;
+        int blueTolerance = 5;
+        boolean motionDetected = false;
+        for (int x = 0; x < xlen; x++) {
+            for (int y = 0; y < ylen; y++) {
+                int r1 = img1pixelMeans[x][y][0];
+                int r2 = img2pixelMeans[x][y][0];
+                int g1 = img1pixelMeans[x][y][1];
+                int g2 = img2pixelMeans[x][y][1];
+                int b1 = img1pixelMeans[x][y][2];
+                int b2 = img2pixelMeans[x][y][2];
+                boolean redDiffer = Math.abs(r1 - r2) > redTolerance;
+                boolean greenDiffer = Math.abs(r1 - r2) > greenTolerance;
+                boolean blueDiffer = Math.abs(r1 - r2) > blueTolerance;
+                if (redDiffer && greenDiffer && blueDiffer)
+                    motionDetected = true;
+            }
+        }
+        return motionDetected;
+    }
+
+    private static int[][][] createPixelMeans(int[][][] imgPixels) {
+        int boxSize = 20;
+        int xlen = 1920 / boxSize;
+        int ylen = 1080 / boxSize;
+        int[][][] pixelMeans = new int[xlen][ylen][3];
+        for (int x = 0; x < xlen; x++) {
+            for (int y = 0; y < ylen; y++) {
+                if (x == 99)
+                    System.out.println("cebuddey");
+                int istart = x * 20;
+                if (istart == 1920)
+                    System.out.println("Mebuddey");
+                int jstart = y * 20;
+                int rtop = 0;
+                int gtop = 0;
+                int btop = 0;
+                for (int i = istart; i < istart + 19; i++) {
+                    for (int j = jstart; j < jstart + 19; j++) {
+                        try {
+                            rtop += imgPixels[i][j][0];
+                            gtop += imgPixels[i][j][1];
+                            btop += imgPixels[i][j][2];
+                        } catch (Throwable t) {
+                            t.printStackTrace();
+                            System.err.println(i + " ," + j + "," + istart + "," + jstart);
+                            System.exit(-1);
+                        }
+
+                    }
+                }
+                int rmean = rtop / (boxSize * boxSize);
+                int gmean = gtop / (boxSize * boxSize);
+                int bmean = btop / (boxSize * boxSize);
+                pixelMeans[x][y][0] = rmean;
+                pixelMeans[x][y][1] = gmean;
+                pixelMeans[x][y][2] = bmean;
+            }
+        }
+        return pixelMeans;
     }
 
 
@@ -290,6 +284,39 @@ public class Main {
         int y = fm.getHeight();
         g2d.drawString(s, x, y);
         g2d.dispose();
+    }
+
+
+    private static int[][][] getImagePixels(String filePath) {
+        int[][][] imagePixels = new int[1920][1080][3];
+        try {
+
+            BufferedImage bi = ImageIO.read(new File(filePath));
+            int w = bi.getWidth();
+            int h = bi.getHeight();
+            for (int y = 0; y < h; y++) {
+                for (int x = 0; x < w; x++) {
+                    int[] rgb = getPixelData(bi, x, y);
+                    imagePixels[x][y] = rgb;
+                }
+            }
+
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return imagePixels;
+    }
+
+    private static int[] getPixelData(BufferedImage img, int x, int y) {
+        int argb = img.getRGB(x, y);
+
+        int rgb[] = new int[]{
+                (argb >> 16) & 0xff, //red
+                (argb >> 8) & 0xff, //green
+                (argb) & 0xff  //blue
+        };
+        return rgb;
     }
 
 
