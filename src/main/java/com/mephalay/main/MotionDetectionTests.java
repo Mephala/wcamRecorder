@@ -91,7 +91,6 @@ public class MotionDetectionTests {
         final int[][][] img1pixelMeans = new int[xlen][ylen][3];
         final int[][][] img2pixelMeans = new int[xlen][ylen][3];
         Thread img1MeanThread = new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     int[][][] img1pixels = getImagePixels(img1Path);
@@ -103,7 +102,6 @@ public class MotionDetectionTests {
             }
         });
         Thread img2MeanThread = new Thread(new Runnable() {
-            @Override
             public void run() {
                 try {
                     int[][][] img2pixels = getImagePixels(img2Path);
