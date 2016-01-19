@@ -24,21 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Main {
 
-
-    public static void detectMovement(List<String> fileNames) {
-        try {
-            List<File> files = new ArrayList<File>();
-            for (int i = fileNames.size() - 1000; i < fileNames.size(); i++) {
-                files.add(new File(fileNames.get(i)));
-            }
-
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-    }
-
-
     public static void main(String[] args) {
 
         try {
