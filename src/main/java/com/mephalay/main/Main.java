@@ -222,7 +222,7 @@ public class Main {
                             });
                             motionDetection.start();
                             Runtime rt = Runtime.getRuntime();
-                            String ffmpegCommand = "ffmpeg -threads 2 -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+                            String ffmpegCommand = "ffmpeg -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
 //            String command = "java -version";
                             String[] command =
                                     {
