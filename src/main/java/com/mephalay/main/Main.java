@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -41,14 +42,7 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-//            recordSample();
-            String folderPath  = "C:\\Users\\N56834\\Desktop\\Development\\wcam";
-            File[] subFolders = new File(folderPath).listFiles();
-            for (File subFolder : subFolders) {
-                long start = System.currentTimeMillis();
-                calculateMotionRateInsideFolder(subFolder.getAbsolutePath());
-                System.out.println("Calculated in " + (System.currentTimeMillis() - start) + " ms.");
-            }
+            recordSample();
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -56,12 +50,12 @@ public class Main {
 
     private static BigDecimal calculateMotionRateInsideFolder(final String folderPath) throws InterruptedException {
         final AtomicInteger movementDetectionRate = new AtomicInteger(0);
-        ExecutorService movementDetectionWorkers = Executors.newFixedThreadPool(4);
-        for (int i = 0; i <29 ; i++) {
-            int startImgNum = i*5;
-            final String img1 = "img"+startImgNum+".jpg";
-            startImgNum+=5;
-            final String img2 = "img"+startImgNum+".jpg";
+        ExecutorService movementDetectionWorkers = Executors.newFixedThreadPool(1);
+        for (int i = 0; i < 29; i++) {
+            int startImgNum = i * 5;
+            final String img1 = "img" + startImgNum + ".jpg";
+            startImgNum += 5;
+            final String img2 = "img" + startImgNum + ".jpg";
             movementDetectionWorkers.submit(new Runnable() {
                 public void run() {
                     detectMovementRate(img1, img2, folderPath, movementDetectionRate);
@@ -72,23 +66,32 @@ public class Main {
         movementDetectionWorkers.shutdown();
         movementDetectionWorkers.awaitTermination(99999L, TimeUnit.HOURS);
         BigDecimal hundred = new BigDecimal(100);
-        BigDecimal rate = hundred.multiply(new BigDecimal(movementDetectionRate.get())).divide(new BigDecimal(29),2,BigDecimal.ROUND_HALF_UP);
+        BigDecimal rate = hundred.multiply(new BigDecimal(movementDetectionRate.get())).divide(new BigDecimal(29), 2, BigDecimal.ROUND_HALF_UP);
         System.out.println("Calculated motion rate of folder:" + folderPath + " =====>" + rate + ", which is favored by #threads:" + movementDetectionRate.get());
         return rate;
     }
 
     private static void detectMovementRate(String img1, String img2, String folderPath, AtomicInteger movementDetectionRate) {
-        int[][][] img1pixels = getImagePixels(folderPath + File.separator +img1);
-        int[][][] img1pixelMeans = createPixelMeans(img1pixels);
-        int[][][] img2pixels = getImagePixels(folderPath + File.separator +img2);
-        int[][][] img2pixelMeans = createPixelMeans(img2pixels);
-        boolean motionDetected = motionDetected(img1pixelMeans, img2pixelMeans);
-        if(motionDetected)
+        Long time = Long.parseLong(new File(folderPath).getName());
+        String img1Path = folderPath + File.separator + img1;
+        File img1File = new File(img1Path);
+        String img2Path = folderPath + File.separator + img2;
+        File img2File = new File(img2Path);
+        if (!img1File.exists() || !img2File.exists()) {
+            System.out.println("FPS is going to be lower than expected for folder:" + folderPath);
+            return;
+        }
+        int[][][] img1pixels = getImagePixels(img1Path);
+        int[][][] img1pixelMeans = createPixelMeans(img1pixels, time);
+        int[][][] img2pixels = getImagePixels(img2Path);
+        int[][][] img2pixelMeans = createPixelMeans(img2pixels, time);
+        boolean motionDetected = motionDetected(img1pixelMeans, img2pixelMeans, time);
+        if (motionDetected)
             movementDetectionRate.getAndIncrement();
     }
 
-    private static boolean motionDetected(int[][][] img1pixelMeans, int[][][] img2pixelMeans) {
-        int boxSize = 20;
+    private static boolean motionDetected(int[][][] img1pixelMeans, int[][][] img2pixelMeans, Long time) {
+        int boxSize = getBoxSize(time);
         int xlen = 1920 / boxSize;
         int ylen = 1080 / boxSize;
         int redTolerance = 5;
@@ -113,24 +116,20 @@ public class Main {
         return motionDetected;
     }
 
-    private static int[][][] createPixelMeans(int[][][] imgPixels) {
-        int boxSize = 20;
+    private static int[][][] createPixelMeans(int[][][] imgPixels, Long time) {
+        int boxSize = getBoxSize(time);
         int xlen = 1920 / boxSize;
         int ylen = 1080 / boxSize;
         int[][][] pixelMeans = new int[xlen][ylen][3];
         for (int x = 0; x < xlen; x++) {
             for (int y = 0; y < ylen; y++) {
-                if (x == 99)
-                    System.out.println("cebuddey");
-                int istart = x * 20;
-                if (istart == 1920)
-                    System.out.println("Mebuddey");
-                int jstart = y * 20;
+                int istart = x * boxSize;
+                int jstart = y * boxSize;
                 int rtop = 0;
                 int gtop = 0;
                 int btop = 0;
-                for (int i = istart; i < istart + 19; i++) {
-                    for (int j = jstart; j < jstart + 19; j++) {
+                for (int i = istart; i < istart + boxSize; i++) {
+                    for (int j = jstart; j < jstart + boxSize; j++) {
                         try {
                             rtop += imgPixels[i][j][0];
                             gtop += imgPixels[i][j][1];
@@ -162,16 +161,16 @@ public class Main {
             dimension.setSize(1980, 1080);
             webcam.getDevice().setResolution(dimension);
             webcam.open();
-            final int HOURS_TO_RECORD = 1;
+            final int HOURS_TO_RECORD = 22;
+            final int RENDERING_THREADS = 1;
             final int loopLimitBasedOnRecordHour = calculateLoopLimit(HOURS_TO_RECORD);
-            final ExecutorService videoRenderingService = Executors.newCachedThreadPool();
+            final ExecutorService renderingService = Executors.newFixedThreadPool(RENDERING_THREADS);
             for (int k = 0; k < loopLimitBasedOnRecordHour; k++) {
                 final ExecutorService webcamImageCreatorService = Executors.newCachedThreadPool();
                 final File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
                 recordFolder.mkdir();
                 final String recordFolderPath = recordFolder.getAbsolutePath();
                 System.out.println("Capturing images for folder:" + recordFolderPath);
-                Long movieName = System.currentTimeMillis();
                 final List<String> list = new ArrayList<String>();
                 long capStart = System.currentTimeMillis();
                 int i = 0;
@@ -197,14 +196,33 @@ public class Main {
                         Thread.sleep(40 - differ);
                     i++;
                 }
-                System.out.println("Done capturing images for folder:" + recordFolderPath + ". Now creating video rendering thread and resuming capturing...");
-                videoRenderingService.submit(new Runnable() {
+                System.out.println("Done capturing images for folder:" + recordFolderPath + ". Now creating video rendering and motion detection service thread and resuming capturing...");
+                renderingService.submit(new Runnable() {
                     public void run() {
                         try {
+                            long start = System.currentTimeMillis();
                             webcamImageCreatorService.shutdown();
                             webcamImageCreatorService.awaitTermination(999999L, TimeUnit.HOURS);
+
+                            Thread motionDetection = new Thread(new Runnable() {
+                                public void run() {
+                                    try {
+                                        //Detecting motion rate
+                                        long start = System.currentTimeMillis();
+                                        BigDecimal movementRate = calculateMotionRateInsideFolder(recordFolderPath);
+                                        boolean createMRFile = new File(recordFolderPath + File.separator + movementRate.toPlainString() + ".mr").createNewFile();
+                                        if (!createMRFile) {
+                                            //TODO Log something if it fails...
+                                        }
+                                        System.out.println("Motion detection calculated in " + (System.currentTimeMillis() - start) + " ms.");
+                                    } catch (Throwable t) {
+                                        System.out.println("Failed to detect movement.");
+                                    }
+                                }
+                            });
+                            motionDetection.start();
                             Runtime rt = Runtime.getRuntime();
-                            String ffmpegCommand = "ffmpeg -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+                            String ffmpegCommand = "ffmpeg -threads 2 -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
 //            String command = "java -version";
                             String[] command =
                                     {
@@ -219,21 +237,23 @@ public class Main {
                             stdin.close();
                             int returnCode = p.waitFor();
                             System.out.println("FFMPEG returned " + returnCode);
+                            System.err.println("Waiting motion detection process...");
+                            motionDetection.join();
                             System.out.println("Deleting images to save up space...");
                             File[] filesUnderRecordFolder = recordFolder.listFiles();
                             for (File file : filesUnderRecordFolder) {
                                 if (file.getName().contains(".jpg"))
                                     file.delete();
                             }
-                            System.out.println("Finished processing files.");
+                            System.out.println("Finished rendering process for this iteration. Duration:" + (System.currentTimeMillis() - start));
                         } catch (Throwable t) {
                             t.printStackTrace();
                         }
                     }
                 });
             }
-            videoRenderingService.shutdown();
-            videoRenderingService.awaitTermination(999999L, TimeUnit.HOURS);
+            renderingService.shutdown();
+            renderingService.awaitTermination(99999999L, TimeUnit.HOURS);
             System.out.println("DONE");
         } catch (Throwable t) {
             t.printStackTrace();
@@ -295,6 +315,7 @@ public class Main {
 
 
         } catch (Throwable t) {
+            System.err.println("Failed for filePath:" + filePath);
             t.printStackTrace();
         }
         return imagePixels;
@@ -309,6 +330,21 @@ public class Main {
                 (argb) & 0xff  //blue
         };
         return rgb;
+    }
+
+    private static int getBoxSize(Long time) {
+        int boxSize = 20;
+        Date calculationTime = new Date(time);
+        Calendar c = Calendar.getInstance();
+        c.setTime(calculationTime);
+        c.set(Calendar.HOUR_OF_DAY, 7);
+        Date morning = c.getTime();
+        c.set(Calendar.HOUR_OF_DAY, 17);
+        Date night = c.getTime();
+        if (calculationTime.after(night) || calculationTime.before(morning)) {
+            boxSize = 120;
+        }
+        return boxSize;
     }
 
 
