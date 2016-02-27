@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Main {
 
+    static boolean onLinux = false;
+
 
     public static void detectMovement(List<String> fileNames) {
         try {
@@ -42,6 +44,8 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+            if (args != null && args.length == 1 && "linux".equals(args[0]))
+                onLinux = true;
             recordSample();
         } catch (Throwable t) {
             t.printStackTrace();
@@ -156,18 +160,34 @@ public class Main {
 
     public static void recordSample() {
         try {
-            Webcam webcam = Webcam.getDefault();
+            Webcam webcam = null;
+            if (onLinux) {
+                List<Webcam> webcamList = Webcam.getWebcams();
+                for (Webcam wcam : webcamList) {
+                    System.out.println(wcam.getName());
+                    if (wcam.getName().contains("C") || wcam.getName().contains("920")) {
+                        webcam = wcam;
+                        break;
+                    }
+                }
+                if (webcam == null)
+                    webcam = Webcam.getDefault();
+            } else
+                webcam = Webcam.getDefault();
             Dimension dimension = new Dimension();
             dimension.setSize(1980, 1080);
             webcam.getDevice().setResolution(dimension);
             webcam.open();
             final int HOURS_TO_RECORD = 22;
             final int RENDERING_THREADS = 1;
+            final int IO_THREADS = 2;
             final int loopLimitBasedOnRecordHour = calculateLoopLimit(HOURS_TO_RECORD);
             final ExecutorService renderingService = Executors.newFixedThreadPool(RENDERING_THREADS);
             for (int k = 0; k < loopLimitBasedOnRecordHour; k++) {
-                final ExecutorService webcamImageCreatorService = Executors.newCachedThreadPool();
-                final File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
+                final ExecutorService webcamImageCreatorService = Executors.newFixedThreadPool(IO_THREADS);
+                File recordFolder = new File("D:\\wcam\\" + System.currentTimeMillis());
+                if (onLinux)
+                    recordFolder = new File("/var/wcam/" + System.currentTimeMillis());
                 recordFolder.mkdir();
                 final String recordFolderPath = recordFolder.getAbsolutePath();
                 System.out.println("Capturing images for folder:" + recordFolderPath);
@@ -197,6 +217,7 @@ public class Main {
                     i++;
                 }
                 System.out.println("Done capturing images for folder:" + recordFolderPath + ". Now creating video rendering and motion detection service thread and resuming capturing...");
+                final File finalRecordFolder = recordFolder;
                 renderingService.submit(new Runnable() {
                     public void run() {
                         try {
@@ -228,7 +249,11 @@ public class Main {
                                     {
                                             "cmd",
                                     };
-                            Process p = Runtime.getRuntime().exec(command);
+                            Process p = null;
+                            if (onLinux)
+                                p = Runtime.getRuntime().exec(ffmpegCommand);
+                            else
+                                p = Runtime.getRuntime().exec(command);
                             new Thread(new SyncPipe(p.getErrorStream(), System.err)).start();
                             new Thread(new SyncPipe(p.getInputStream(), System.out)).start();
                             PrintWriter stdin = new PrintWriter(p.getOutputStream());
@@ -240,7 +265,7 @@ public class Main {
                             System.err.println("Waiting motion detection process...");
                             motionDetection.join();
                             System.out.println("Deleting images to save up space...");
-                            File[] filesUnderRecordFolder = recordFolder.listFiles();
+                            File[] filesUnderRecordFolder = finalRecordFolder.listFiles();
                             for (File file : filesUnderRecordFolder) {
                                 if (file.getName().contains(".jpg"))
                                     file.delete();
