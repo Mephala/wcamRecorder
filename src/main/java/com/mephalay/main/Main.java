@@ -163,9 +163,13 @@ public class Main {
             Webcam webcam = null;
             if (onLinux) {
                 List<Webcam> webcamList = Webcam.getWebcams();
+//                for (Webcam webcam1 : webcamList) {
+//                    System.out.println(webcam1.getName());
+//                }
+//                return;
                 for (Webcam wcam : webcamList) {
                     System.out.println(wcam.getName());
-                    if (wcam.getName().contains("C") || wcam.getName().contains("920")) {
+                    if (wcam.getName().contains("C920")) {
                         webcam = wcam;
                         break;
                     }
@@ -179,7 +183,7 @@ public class Main {
             webcam.getDevice().setResolution(dimension);
             webcam.open();
             final int HOURS_TO_RECORD = 22;
-            final int RENDERING_THREADS = 1;
+            final int RENDERING_THREADS = 2;
             final int IO_THREADS = 2;
             final int loopLimitBasedOnRecordHour = calculateLoopLimit(HOURS_TO_RECORD);
             final ExecutorService renderingService = Executors.newFixedThreadPool(RENDERING_THREADS);
@@ -243,8 +247,8 @@ public class Main {
                             });
                             motionDetection.start();
                             Runtime rt = Runtime.getRuntime();
-//                            String ffmpegCommand = "C:\\Users\\masraf\\Desktop\\Apps\\ffmpeg\\bin\\ffmpeg -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
-                            String ffmpegCommand = "ffmpeg -framerate 45/10 -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+                            String fpsValue = calculateFpsValue(recordFolderPath);
+                            String ffmpegCommand = "ffmpeg -framerate " + fpsValue + " -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
 //            String command = "java -version";
                             String[] command =
                                     {
@@ -284,6 +288,17 @@ public class Main {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    private static String calculateFpsValue(String recordFolderPath) {
+        File parentFolder = new File(recordFolderPath);
+        File[] childs = parentFolder.listFiles();
+        int imgCount = 0;
+        for (File child : childs) {
+            if (child.getName().contains("jpg"))
+                imgCount++;
+        }
+        return new BigDecimal(imgCount).divide(new BigDecimal(30), 1, BigDecimal.ROUND_HALF_DOWN).toPlainString();
     }
 
     private static int calculateLoopLimit(int hours_to_record) {
