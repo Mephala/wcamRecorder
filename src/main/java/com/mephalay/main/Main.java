@@ -248,7 +248,8 @@ public class Main {
                             motionDetection.start();
                             Runtime rt = Runtime.getRuntime();
                             String fpsValue = calculateFpsValue(recordFolderPath);
-                            String ffmpegCommand = "ffmpeg -framerate " + fpsValue + " -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+                            String ffmpegCommand = "ffmpeg -framerate " + fpsValue + " -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
+//                            String ffmpegCommand = "ffmpeg -framerate " + fpsValue + " -i " + recordFolderPath + File.separator + "img%d.jpg -c:v libx264 -r 30 -pix_fmt yuv420p " + recordFolderPath + File.separator + "out.mp4";
 //            String command = "java -version";
                             String[] command =
                                     {
