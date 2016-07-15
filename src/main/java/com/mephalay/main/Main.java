@@ -44,6 +44,18 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+            while (true) {
+                runMain(args);
+                Thread.sleep(300000L); //Hata olursa 5 dk bekliyoruz.
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
+    }
+
+    private static void runMain(String[] args) {
+        try {
             if (args != null && args.length == 1 && "linux".equals(args[0]))
                 onLinux = true;
             recordSample();
